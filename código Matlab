@@ -1,0 +1,70 @@
+/* codigo Matlab */
+
+% Definir pesos
+W1 = 0.5;
+W2 = 0.5;
+
+% Supongamos que x0 es un punto inicial válido
+x0 = [0, 0]; % completa con los valores iniciales
+
+% Definir función objetivo
+F = @(x) W1 * J1(x) + W2 * J2(x);
+
+% Establecer opciones del optimizador
+options = optimoptions('fmincon', 'Display', 'iter', 'Algorithm', 'interior-point', 'PlotFcn', @plotOptimization);
+
+% Definir restricciones (en este caso no hay restricciones)
+A = [];
+b = [];
+Aeq = [];
+beq = [];
+lb = [];
+ub = [];
+
+% Resolver el problema de optimización
+[x_opt, fval, exitflag, output] = fmincon(F, x0, A, b, Aeq, beq, lb, ub, [], options);
+
+% Mostrar resultados
+disp('Optimal solution:');
+disp(x_opt);
+disp('Objective value:');
+disp(fval);
+
+% Definir funciones J1 y J2
+function result = J1(x)
+    result = 3*(1-x(1)).^2 * exp(-x(2)) - (1-(x(2)+1).^2 - 10*x(1))*(5 - x(2))*(1 - x(2))*(2 * exp(-x(2)))*(1-x(2))^2 - 3*exp(-(x(1)+2)^2-x(2))*(1 + 0.5*(2*x(1) + x(2)));
+end
+
+function result = J2(x)
+    result = 3*(1-x(2))^2 * exp(-x(2)^2-(x(1)+1)^2) - 10*(-x(2)/5 + x(2)^3 + x(2)^5)*exp(-x(2)^2-x(1)^2) - 3*exp(-(-x(2)+2)^2-x(2)^2);
+end
+
+% Función para trazar el recorrido de la optimización
+function stop = plotOptimization(x, optimValues, state)
+    persistent history;
+    
+    if isempty(history)
+        history.x = [];
+        history.fval = [];
+    end
+    
+    history.x = [history.x; x];
+    history.fval = [history.fval; optimValues.fval];
+    
+    if strcmp(state, 'iter')
+        figure(1);
+        plot3(x(1), x(2), optimValues.fval, 'ro-', 'LineWidth', 1.5);
+        xlabel('X1');
+        ylabel('X2');
+        zlabel('Objective Value');
+        title('Optimization Progress');
+        grid on;
+        hold on;
+    elseif strcmp(state, 'done')
+        % Trazar líneas conectando los puntos
+        plot3(history.x(:, 1), history.x(:, 2), history.fval, 'bo-');
+        hold off;
+    end
+    
+    stop = false;
+end
